@@ -1,0 +1,222 @@
+---
+title: "How do economic factors shape voting patterns?"
+author: "Sean Harris"
+subtitle: An exploration of ANES cumulative time series data.
+output:
+  html_document:
+    df_print: paged
+---
+
+
+<font size="4"> 0. Introduction </font>
+<br>The ANES dataset contains survey responses about the topic we are interested in. These range back to 1948, and not every question was asked every year, so the data we use are compilations of many different questions from different years. With that in mind, some simple and interesting relationships can be found between economic status and voting behavior.  
+
+<font size="3"> 0.1 Loading Libraries and Data </font>
+<br> First the necessary packages are installed and loaded with the pacman package. Then the ANES data is loaded from a .sav file with the haven package.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+pacman::p_load(
+  pacman, ggplot2, ggthemes, rmarkdown,magrittr,dplyr
+)
+library(haven)
+anes_dat <- read_sav("../data/anes_timeseries_cdf.sav")
+save(anes_dat,file="../output/anes_dat.sav")
+```
+
+<font size="3"> 0.2 Preparing Variables </font>
+<br> A new data variable, anes_use, is created to hold results of the survey questions we are interested in.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+anes_use=anes_dat%>% 
+  mutate( 
+    year=as_factor(VCF0004), 
+    vote=as_factor(VCF0706), 
+    income=as_factor(VCF0114),
+    occupation=as_factor(VCF0115)
+  ) 
+anes_use = anes_use%>%
+  select(year, vote, income,occupation)
+save(anes_use,file="../output/anes_use.sav")
+
+```
+<font size="4"> 1. How does income affect voting behavior? </font>
+
+<font size="3"> 1.1 Income over time </font>
+<br> First we will look at how different income brackets vote. The ANES data-set contains questions which surveyed respondee's self-reported income as being either: 1. 0-16 percentile, 17-23 percentile, 34-67 percentile, 68-95 percentile, and 96-100 percentile. 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+anes_income = anes_use %>% 
+  filter(!is.na(income) & !is.na(vote))%>% 
+  group_by( year, income)%>% 
+  count(vote)%>% 
+  mutate(prop = n/sum(n))%>%
+  group_by( year, income)#%>% 
+save(anes_income,file="../output/anes_income.sav")
+
+
+ggplot(anes_income, 
+       aes(x=year, y=prop, fill=vote)) + 
+  geom_bar(stat="identity", colour="black")+ 
+  scale_fill_manual(values=c("dodgerblue3", 
+                             "firebrick2", "gold1", 
+                             "lightgoldenrod1","black"))+ 
+  facet_wrap(~income, ncol=1) + 
+  theme(axis.text.x = element_text(angle = 90))+ 
+  labs(title="How does income bracket relate to your presidential vote?",y="")
+ggsave("../figs/income.png")
+```
+<br>At a glance, some patterns are clear: less wealthy people vote far less than the wealthy, and tend to vote less Republican. Other interesting artifacts can be observed, like 1992's third party vote being concentrated in the middle to upper-middle class bracket.
+
+<font size="3"> 1.2 Aggregated income </font>
+<br> These patterns become more obvious when all years are aggregated together, and we look at total votes for a given party per income group.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+anes_income_net = anes_use %>% 
+  filter(!is.na(income) & !is.na(vote))%>% 
+  group_by( income)%>% 
+  count(vote)%>% 
+  mutate(prop = n/sum(n))%>%
+  group_by( income)
+save(anes_income_net,file="../output/anes_income_net.sav")
+
+ggplot(anes_income_net, 
+       aes(x=income, y=prop, fill=vote)) + 
+  geom_bar(stat="identity", colour="black")+ 
+  scale_fill_manual(values=c("dodgerblue3", 
+                             "firebrick2", "gold1", 
+                             "lightgoldenrod1","black"))+ 
+  theme(axis.text.x = element_text(angle = 90))+ 
+  labs(title="How does income bracket relate to your presidential vote?",y="Vote Distribution")
+ggsave("../figs/income_net.png")
+
+```
+<br>We see three patterns: 1. Democratic vote is roughly constant across income groups, 2. Republican vote grows with income, 3. Nonvoting grows with poverty. 
+
+<font size="3"> 1.3 Regression Analysis </font>
+<br> We can see if these three patterns can be made more concrete with a linear regression analysis.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+ggplotRegression <- function (fit) {
+
+require(ggplot2)
+
+ggplot(fit$model, aes_string(x = names(fit$model)[2], y = names(fit$model)[1])) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  labs(title = paste("R2 = ",signif(summary(fit)$r.squared, 5)))
+
+#Citation:https://sejohnston.com/2012/08/09/a-quick-and-easy-function-to-plot-lm-results-in-r/
+}
+```
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+regression_dem = anes_income_net %>% 
+  filter(vote=="1. Democrat")%>% 
+  select(income,prop)
+regression_rep = anes_income_net %>% 
+  filter(vote=="2. Republican")%>% 
+  select(income,prop)
+regression_none = anes_income_net %>% 
+  filter(vote=="7. Did not vote or voted but not for president (exc.1972)")%>% 
+  select(income,prop)
+
+d = lm(regression_dem$prop~c(8,25,50,82,98))
+r = lm(regression_rep$prop~c(8,25,50,82,98))
+n = lm(regression_none$prop~c(8,25,50,82,98))
+
+d_r=ggplotRegression(d)+ labs(y="Proportion of Democratic voters",x="Income Group\n(Percentile)")+stat_smooth(method = "lm", col = "blue")
+r_r=ggplotRegression(r)+ labs(y="Proportion of Republican voters",x="Income Group\n(Percentile)")+stat_smooth(method = "lm", col = "red")
+n_r=ggplotRegression(n)+ labs(y="Proportion of Nonvoters",x="Income Group\n(Percentile)")+stat_smooth(method = "lm", col = "black")
+
+library(gridExtra)
+grid.arrange(d_r,r_r,n_r,ncol=3, nrow = 1)
+
+ g <- arrangeGrob(d_r, r_r, n_r, ncol=3, nrow=1) #generates g
+ ggsave(file="../figs/wealth_regression.png", g) #saves g
+
+
+
+```
+<br>The three patterns appear to hold. There is no clear linear relationship between income and democratic vote. And there is a strong linear positive correlation between income and Republican vote, and a strong linear negative correlation for nonvoters.
+<br>The regression suggests a 1-percentile increase in wealth correlates with a .36% increase of Republican vote and a .33% decrease in abstaining from voting. While this relationship is strong, it is not necessarily causal, and it is important to keep in mind confounding variables like race or geography that are not the focus of this analysis.
+
+<br> Since the wealthy appear to vote strongly Republican, we can look at how the rich vote changes over time.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+anes_income_rep_rich = anes_income %>%
+  filter(vote == "2. Republican" & income == "5. 96 to 100 percentile")
+#mean(anes_income_rep_rich$prop)
+#min(anes_income_rep_rich$prop)
+#head(sort(anes_income_rep_rich$prop))
+anes_income_rep_rich = anes_income_rep_rich[14:18,]
+save(anes_income_rep_rich,file="../output/anes_income_rep_rich.sav")
+
+lin=lm(anes_income_rep_rich$prop~seq(2000, 2016, by=4))
+
+ggplotRegression(lm(anes_income_rep_rich$prop~seq(2000, 2016, by=4)))+ labs(title="% Wealthy voting Red (96+ percentile wealth)",y="Proportion Republican",x="Year")
+ggsave("../figs/rich_vote.png")
+
+
+```
+<br>It appears that the proportion of the wealthy (96+ percentile) voting Republican has consistently decreased since 2000. Infact, 2016 saw the lowest proportion of wealthy voting Republican in the entire dataset: 34% in 2016, where the dataset mean is 59%.
+
+
+<font size="4"> 2. How does occupation affect voting behavior? </font>
+<br> If the wealthy are growing less Republican, a look at the relationship between one's profession and voting behavior could give deeper insight.
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+anes_occupation = anes_use %>% 
+  filter(!is.na(occupation) & !is.na(vote))%>% 
+  group_by(year, occupation)%>% 
+  count(vote)%>% 
+  group_by(year, occupation)%>% 
+  mutate( prop=n/sum(n)
+) 
+save(anes_occupation,file="../output/anes_occupation.sav")
+
+ggplot(anes_occupation, 
+       aes(x=year, y=prop, fill=vote)) + 
+  geom_bar(stat="identity", colour="black")+ 
+  scale_fill_manual(values=c("dodgerblue3", 
+                             "firebrick2", "gold1", 
+                             "lightgoldenrod1","black"))+ 
+  facet_wrap(~occupation, ncol=1) + 
+  theme(axis.text.x = element_text(angle = 90))+ 
+  labs(title="How does your occupation relate to your presidential vote?")
+ggsave("../figs/occupations.png")
+
+
+```
+
+<br>At a glance, we can see how higher-salary Professional and Managerial occupations have much higher voter turnout, while lower-salary Laborers have very low turnout. 
+<br> We can do a linear regression analysis to see if higher-salary occupations are becoming less Republican, as the data so far has suggested.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+regression_pmc = anes_occupation %>%
+  filter(occupation == "1. Professional and managerial" & vote=="1. Democrat")
+regression_pmc = regression_pmc[5:14,]
+pmc = lm(regression_pmc$prop~seq(1968, 2005, by=4))
+
+ggplotRegression(pmc) + labs(title="Professional and Managerial Professions",y="Proportion of Democratic voters",x="Year")+stat_smooth(method = "lm", col = "blue")
+ggsave("../figs/pmc.png")
+
+```
+
+<br>The regression suggests Professional and Managerial voters have grown increasingly Democratic since the 70s. As expected, this wealthier cohort has trended liberal over time. This is just one group, and further analysis into the connection with education and urbanism could be interesting.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
