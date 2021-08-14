@@ -68,5 +68,3 @@ We can do a linear regression analysis to see if higher-salary occupations are b
 The regression suggests Professional and Managerial voters have grown increasingly Democratic since the 70s. As expected, this wealthier cohort has trended liberal over time. This is just one group, and further analysis into the connection with education and urbanism could be interesting.
 
 </div>
-
-<script>// add bootstrap table styles to pandoc tables function bootstrapStylePandocTables() { $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed'); } $(document).ready(function () { bootstrapStylePandocTables(); });</script> <script>$(document).ready(function () { window.buildTabsets("TOC"); }); $(document).ready(function () { $('.tabset-dropdown > .nav-tabs > li').click(function () { $(this).parent().toggleClass('nav-tabs-open') }); });</script> <script>(function () { var script = document.createElement("script"); script.type = "text/javascript"; script.src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"; document.getElementsByTagName("head")[0].appendChild(script); })();</script>
