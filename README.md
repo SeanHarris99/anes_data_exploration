@@ -24,14 +24,14 @@ A new data variable, anes_use, is created to hold results of the survey question
 <font size="3">1.1 Income over time</font>  
 First we will look at how different income brackets vote. The ANES data-set contains questions which surveyed respondee's self-reported income as being either: 1\. 0-16 percentile, 17-23 percentile, 34-67 percentile, 68-95 percentile, and 96-100 percentile.
 
- ![Alt text](figs/income.PNG?raw=true "Title2")
+ ![Alt text](figs/income.png?raw=true "Title2")
   
 At a glance, some patterns are clear: less wealthy people vote far less than the wealthy, and tend to vote less Republican. Other interesting artifacts can be observed, like 1992's third party vote being concentrated in the middle to upper-middle class bracket.
 
 <font size="3">1.2 Aggregated income</font>  
 These patterns become more obvious when all years are aggregated together, and we look at total votes for a given party per income group.
 
- ![Alt text](figs/income_net.PNG?raw=true "Title2")
+ ![Alt text](figs/income_net.png?raw=true "Title2")
 
 
 We see three patterns: 1\. Democratic vote is roughly constant across income groups, 2\. Republican vote grows with income, 3\. Nonvoting grows with poverty.
@@ -39,14 +39,14 @@ We see three patterns: 1\. Democratic vote is roughly constant across income gro
 <font size="3">1.3 Regression Analysis</font>  
 We can see if these three patterns can be made more concrete with a linear regression analysis.
 
- ![Alt text](figs/wealth_regression.PNG?raw=true "Title2")
+ ![Alt text](figs/wealth_regression.png?raw=true "Title2")
 
 The three patterns appear to hold. There is no clear linear relationship between income and democratic vote. And there is a strong linear positive correlation between income and Republican vote, and a strong linear negative correlation for nonvoters.  
 The regression suggests a 1-percentile increase in wealth correlates with a .36% increase of Republican vote and a .33% decrease in abstaining from voting. While this relationship is strong, it is not necessarily causal, and it is important to keep in mind confounding variables like race or geography that are not the focus of this analysis.
 
 Since the wealthy appear to vote strongly Republican, we can look at how the rich vote changes over time.
 
- ![Alt text](figs/rich_vote.PNG?raw=true "Title2")
+ ![Alt text](figs/rich_vote.png?raw=true "Title2")
 
 
 It appears that the proportion of the wealthy (96+ percentile) voting Republican has consistently decreased since 2000\. Infact, 2016 saw the lowest proportion of wealthy voting Republican in the entire dataset: 34% in 2016, where the dataset mean is 59%.
@@ -55,13 +55,13 @@ It appears that the proportion of the wealthy (96+ percentile) voting Republican
 If the wealthy are growing less Republican, a look at the relationship between one's profession and voting behavior could give deeper insight.
 
 
- ![Alt text](figs/occupations.PNG?raw=true "Title2")
+ ![Alt text](figs/occupations.png?raw=true "Title2")
 
 
 At a glance, we can see how higher-salary Professional and Managerial occupations have much higher voter turnout, while lower-salary Laborers have very low turnout.  
 We can do a linear regression analysis to see if higher-salary occupations are becoming less Republican, as the data so far has suggested.
 
- ![Alt text](figs/pmc.PNG?raw=true "Title2")
+ ![Alt text](figs/pmc.png?raw=true "Title2")
 
 
 
